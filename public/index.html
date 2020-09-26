@@ -21,7 +21,7 @@
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./serviceworker.js')
             .then(reg => console.log('Success:', reg.scope))
-            .err(err => console.log('Error:', err))
+            .catch(err => console.log('Error:', err))
         })
       }
     </script>
