@@ -41,3 +41,25 @@ self.addEventListener('activate', event => {
         ))
     );
 });
+
+// Close notifications event
+self.addEventListener('notificationclose', function(e) {
+    let notification = e.notification;
+    let primaryKey = notification.data.primaryKey;
+  
+    console.log('Closed notification: ' + primaryKey);
+});
+
+// Click notifications event
+self.addEventListener('notificationclick', function(e) {
+    let notification = e.notification;
+    let primaryKey = notification.data.primaryKey;
+    let action = e.action;
+  
+    if (action === 'close') {
+      notification.close();
+    } else {
+      self.clients.openWindow('index.html');
+      notification.close();
+    }
+});
