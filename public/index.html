@@ -17,10 +17,37 @@
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
     <script>
+      function urlBase64ToUint8Array(base64String) {
+        const padding = "=".repeat((4 - base64String.length % 4) % 4)
+        // eslint-disable-next-line
+        const base64 = (base64String + padding).replace(/\-/g, "+").replace(/_/g, "/")
+
+        const rawData = window.atob(base64)
+        const outputArray = new Uint8Array(rawData.length)
+
+        for (let i = 0; i < rawData.length; ++i) {
+          outputArray[i] = rawData.charCodeAt(i)
+        }
+        return outputArray
+      }
       if('serviceWorker' in navigator) {
         window.addEventListener('load', () => {
           navigator.serviceWorker.register('./serviceworker.js')
-            .then(reg => console.log('Success:', reg.scope))
+            .then(reg => {
+              console.log('Service Worker Registered!', reg);
+
+              reg.pushManager.getSubscription().then(function(sub) {
+                if (sub === null) {
+                  // Update UI to ask user to register for Push
+                  console.log('Not subscribed to push service!');
+                  subscribeUser();
+                } else {
+                  // We have a subscription, update the database
+                  console.log('Subscription object: ', btoa(String.fromCharCode(...new Uint8Array(sub.getKey('auth')))));
+                  console.log('Subscription object: ', sub.endpoint);
+                }
+              });
+            })
             .catch(err => console.log('Error:', err))
         })
       }
@@ -51,9 +78,29 @@
           });
         }
       }
-      setInterval(() => {
-        displayNotification();
-      }, 5000);
+      // setInterval(() => {
+      //   displayNotification();
+      // }, 5000);
+      function subscribeUser() {
+        if ('serviceWorker' in navigator) {
+            const applicationServerKey = urlBase64ToUint8Array('BGhbILy7wRNrJzDdpCLTUtP0rSnMw88yhwNdTnrqgaOfKWuaTz9b80AIsAHOvK16DsOP4JbhA7xmcne-cSi5L90');
+            navigator.serviceWorker.ready.then(function(reg) {
+
+                reg.pushManager.subscribe({
+                    userVisibleOnly: true,
+                    applicationServerKey
+                }).then(function(sub) {
+                    console.log('Endpoint URL: ', sub.keys);
+                }).catch(function(e) {
+                    if (Notification.permission === 'denied') {
+                        console.warn('Permission for notifications was denied');
+                } else {
+                    console.error('Unable to subscribe to push', e);
+                }
+                });
+            });
+        } 
+    }
     </script>
   </body>
 </html>
